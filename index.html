@@ -19,7 +19,7 @@
     }
     
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: 0 auto;
       background: white;
       border-radius: 16px;
@@ -123,104 +123,164 @@
       border: 1px solid #bee5eb;
     }
     
-    .preview {
+    .result-container {
       margin-top: 30px;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      padding: 20px;
-      max-height: 400px;
-      overflow-y: auto;
       display: none;
     }
     
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #667eea;
+    }
+    
+    .result-header h2 {
+      color: #667eea;
+      font-size: 1.5em;
+    }
+    
+    .result-actions {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .result-content {
+      background: #fafafa;
+      border-radius: 8px;
+      padding: 20px;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    
     .feed-item {
-      border-bottom: 1px solid #eee;
-      padding: 15px 0;
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
     .feed-item:last-child {
-      border-bottom: none;
+      margin-bottom: 0;
     }
     
     .feed-item h3 {
-      margin-bottom: 8px;
+      margin-bottom: 10px;
+      font-size: 1.3em;
     }
     
     .feed-item h3 a {
-      color: #667eea;
+      color: #333;
       text-decoration: none;
     }
     
     .feed-item h3 a:hover {
-      text-decoration: underline;
+      color: #667eea;
+    }
+    
+    .feed-item .meta {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 12px;
+      font-size: 0.85em;
     }
     
     .feed-item .date {
       color: #999;
-      font-size: 0.85em;
-      margin-bottom: 8px;
+    }
+    
+    .feed-item .source {
+      color: #667eea;
     }
     
     .feed-item .content {
       color: #555;
-      line-height: 1.6;
+      line-height: 1.8;
     }
     
-    .actions {
-      margin-top: 20px;
-      display: none;
+    .feed-item .content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+    
+    .hidden {
+      display: none !important;
+    }
+    
+    .input-section {
+      transition: opacity 0.3s;
+    }
+    
+    .input-section.collapsed {
+      opacity: 0.3;
+      pointer-events: none;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>📰 rss2html</h1>
-    <p class="subtitle">将 RSS/Atom 订阅源转换为静态 HTML 页面</p>
+    <p class="subtitle">将 RSS/Atom 订阅源转换为美观的 HTML 页面</p>
     
-    <div class="input-group">
-      <label for="feedUrl">订阅源 URL</label>
-      <input 
-        type="url" 
-        id="feedUrl" 
-        placeholder="https://example.com/feed.xml"
-        value="https://feeds.feedburner.com/36kr"
-      />
+    <div class="input-section" id="inputSection">
+      <div class="input-group">
+        <label for="feedUrl">订阅源 URL</label>
+        <input 
+          type="url" 
+          id="feedUrl" 
+          placeholder="https://example.com/feed.xml"
+          value="https://feeds.feedburner.com/36kr"
+        />
+      </div>
+      
+      <div class="input-group">
+        <label for="feedTitle">页面标题（可选）</label>
+        <input 
+          type="text" 
+          id="feedTitle" 
+          placeholder="留空则使用订阅源原标题"
+        />
+      </div>
+      
+      <div>
+        <button class="btn" id="convertBtn" onclick="convertFeed()">
+          🔄 转换
+        </button>
+        <button class="btn btn-secondary" id="newBtn" onclick="newConversion()" style="display:none;">
+          ➕ 新建
+        </button>
+      </div>
+      
+      <div class="status" id="status"></div>
     </div>
     
-    <div class="input-group">
-      <label for="feedTitle">页面标题</label>
-      <input 
-        type="text" 
-        id="feedTitle" 
-        placeholder="自定义标题（可选）"
-      />
+    <div class="result-container" id="resultContainer">
+      <div class="result-header">
+        <h2 id="resultTitle"></h2>
+        <div class="result-actions">
+          <button class="btn btn-secondary" onclick="downloadHTML()">
+            💾 下载
+          </button>
+          <button class="btn btn-secondary" onclick="toggleFullscreen()">
+            🔲 全屏
+          </button>
+        </div>
+      </div>
+      
+      <div class="result-content" id="resultContent"></div>
     </div>
-    
-    <div>
-      <button class="btn" id="convertBtn" onclick="convertFeed()">
-        🔄 转换
-      </button>
-      <button class="btn btn-secondary" id="downloadBtn" onclick="downloadHTML()" style="display:none;">
-        💾 下载 HTML
-      </button>
-      <button class="btn btn-secondary" id="previewBtn" onclick="togglePreview()" style="display:none;">
-        👁️ 预览
-      </button>
-    </div>
-    
-    <div class="status" id="status"></div>
-    
-    <div class="preview" id="preview"></div>
-    
-    <div class="actions" id="actions"></div>
   </div>
 
   <script>
-    let generatedHTML = '';
-    let feedItems = [];
+    let feedData = null;
+    let isFullscreen = false;
 
     async function fetchFeed(url) {
-      // 使用 CORS 代理解决跨域问题
       const corsProxy = 'https://api.allorigins.win/raw?url=';
       const response = await fetch(corsProxy + encodeURIComponent(url));
       
@@ -236,61 +296,175 @@
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(xml, 'text/xml');
       
-      // 检查解析错误
       const parseError = xmlDoc.querySelector('parsererror');
       if (parseError) {
         throw new Error('XML 解析失败');
       }
       
-      // 尝试 RSS 2.0
       let items = xmlDoc.querySelectorAll('item');
       let title = xmlDoc.querySelector('channel > title')?.textContent || 'RSS Feed';
+      let link = xmlDoc.querySelector('channel > link')?.textContent || '';
       
-      // 尝试 Atom
       if (items.length === 0) {
         items = xmlDoc.querySelectorAll('entry');
         title = xmlDoc.querySelector('feed > title')?.textContent || 'Atom Feed';
+        link = xmlDoc.querySelector('feed > link')?.getAttribute('href') || 
+               xmlDoc.querySelector('feed > link')?.textContent || '';
       }
       
       const feedItems = Array.from(items).map(item => {
         const title = item.querySelector('title')?.textContent || '无标题';
         const link = item.querySelector('link')?.getAttribute('href') || 
                      item.querySelector('link')?.textContent || '#';
-        const description = item.querySelector('description')?.textContent || 
-                           item.querySelector('summary')?.textContent || 
-                           item.querySelector('content')?.textContent || '';
+        let description = item.querySelector('description')?.textContent || 
+                         item.querySelector('summary')?.textContent || 
+                         item.querySelector('content')?.textContent || '';
         const pubDate = item.querySelector('pubDate')?.textContent || 
                        item.querySelector('published')?.textContent || 
                        item.querySelector('updated')?.textContent || '';
+        const author = item.querySelector('author')?.textContent || 
+                      item.querySelector('dc\\:creator')?.textContent || '';
         
-        return { title, link, description, pubDate };
+        // 清理描述中的脚本和样式
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = description;
+        const scripts = tempDiv.querySelectorAll('script, style');
+        scripts.forEach(s => s.remove());
+        description = tempDiv.innerHTML;
+        
+        return { title, link, description, pubDate, author };
       });
       
-      return { title, items: feedItems };
+      return { title, link, items: feedItems };
     }
 
-    function generateHTML(feedTitle, items) {
-      const itemHTML = items.map(item => `
+    function renderFeed(feed, customTitle) {
+      const title = customTitle || feed.title;
+      const sourceLink = feed.link;
+      
+      const headerHTML = sourceLink ? `
+        <p style="margin-bottom: 20px;">
+          <a href="${sourceLink}" target="_blank" class="source">
+            🔗 访问原始订阅源
+          </a>
+        </p>
+      ` : '';
+      
+      const itemHTML = feed.items.map((item, index) => `
         <article class="feed-item">
-          <h2><a href="${item.link}" target="_blank">${item.title}</a></h2>
-          <time class="date">${item.pubDate}</time>
+          <h3><a href="${item.link}" target="_blank">${item.title}</a></h3>
+          <div class="meta">
+            <span class="date">📅 ${formatDate(item.pubDate)}</span>
+            ${item.author ? `<span class="author">✍️ ${item.author}</span>` : ''}
+            <span class="source">🔗 #${index + 1}</span>
+          </div>
           <div class="content">${item.description}</div>
         </article>
       `).join('\n');
 
-      return `<!DOCTYPE html>
+      return `
+        ${headerHTML}
+        <div style="color: #999; margin-bottom: 20px;">共 ${feed.items.length} 篇文章</div>
+        ${itemHTML}
+      `;
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '未知日期';
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+      return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function showStatus(message, type) {
+      const status = document.getElementById('status');
+      status.textContent = message;
+      status.className = `status ${type}`;
+      status.style.display = 'block';
+    }
+
+    async function convertFeed() {
+      const url = document.getElementById('feedUrl').value.trim();
+      const customTitle = document.getElementById('feedTitle').value.trim();
+      
+      if (!url) {
+        showStatus('请输入订阅源 URL', 'error');
+        return;
+      }
+      
+      const btn = document.getElementById('convertBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ 处理中...';
+      
+      try {
+        showStatus('正在获取订阅源...', 'loading');
+        
+        const feed = await fetchFeed(url);
+        
+        if (feed.items.length === 0) {
+          throw new Error('未找到任何文章');
+        }
+        
+        feedData = { feed, customTitle };
+        
+        document.getElementById('resultTitle').textContent = customTitle || feed.title;
+        document.getElementById('resultContent').innerHTML = renderFeed(feed, customTitle);
+        
+        document.getElementById('inputSection').classList.add('collapsed');
+        document.getElementById('resultContainer').style.display = 'block';
+        document.getElementById('newBtn').style.display = 'inline-block';
+        document.getElementById('convertBtn').style.display = 'none';
+        
+        showStatus(`✅ 成功！共 ${feed.items.length} 篇文章`, 'success');
+        
+      } catch (error) {
+        showStatus(`❌ 错误：${error.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔄 转换';
+      }
+    }
+
+    function newConversion() {
+      feedData = null;
+      document.getElementById('inputSection').classList.remove('collapsed');
+      document.getElementById('resultContainer').style.display = 'none';
+      document.getElementById('newBtn').style.display = 'none';
+      document.getElementById('convertBtn').style.display = 'inline-block';
+      document.getElementById('status').style.display = 'none';
+      document.getElementById('feedUrl').value = '';
+      document.getElementById('feedTitle').value = '';
+      
+      if (isFullscreen) {
+        toggleFullscreen();
+      }
+    }
+
+    function downloadHTML() {
+      if (!feedData) return;
+      
+      const { feed, customTitle } = feedData;
+      const title = customTitle || feed.title;
+      
+      const fullHTML = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${feedTitle}</title>
+  <title>${title}</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      max-width: 800px;
+      max-width: 900px;
       margin: 0 auto;
       padding: 20px;
-      line-height: 1.6;
+      line-height: 1.8;
       background: #fafafa;
     }
     header {
@@ -321,13 +495,19 @@
     .feed-item h2 a:hover {
       color: #667eea;
     }
-    .date {
-      color: #999;
+    .meta {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 12px;
       font-size: 0.85em;
+      color: #999;
     }
     .content {
-      margin-top: 15px;
       color: #555;
+    }
+    .content img {
+      max-width: 100%;
+      height: auto;
     }
     footer {
       text-align: center;
@@ -339,68 +519,18 @@
 </head>
 <body>
   <header>
-    <h1>${feedTitle}</h1>
+    <h1>${title}</h1>
   </header>
   <main>
-    ${itemHTML}
+    ${renderFeed(feed, customTitle)}
   </main>
   <footer>
-    <p>Generated by rss2html</p>
+    <p>Generated by rss2html · ${new Date().toLocaleDateString('zh-CN')}</p>
   </footer>
 </body>
 </html>`;
-    }
-
-    function showStatus(message, type) {
-      const status = document.getElementById('status');
-      status.textContent = message;
-      status.className = `status ${type}`;
-      status.style.display = 'block';
-    }
-
-    async function convertFeed() {
-      const url = document.getElementById('feedUrl').value.trim();
-      const customTitle = document.getElementById('feedTitle').value.trim();
       
-      if (!url) {
-        showStatus('请输入订阅源 URL', 'error');
-        return;
-      }
-      
-      const btn = document.getElementById('convertBtn');
-      btn.disabled = true;
-      btn.textContent = '⏳ 处理中...';
-      
-      try {
-        showStatus('正在获取订阅源...', 'loading');
-        
-        const feed = await fetchFeed(url);
-        const title = customTitle || feed.title;
-        
-        if (feed.items.length === 0) {
-          throw new Error('未找到任何文章');
-        }
-        
-        generatedHTML = generateHTML(title, feed.items);
-        feedItems = feed.items;
-        
-        showStatus(`✅ 成功！共 ${feed.items.length} 篇文章`, 'success');
-        
-        document.getElementById('downloadBtn').style.display = 'inline-block';
-        document.getElementById('previewBtn').style.display = 'inline-block';
-        
-      } catch (error) {
-        showStatus(`❌ 错误：${error.message}`, 'error');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = '🔄 转换';
-      }
-    }
-
-    function downloadHTML() {
-      if (!generatedHTML) return;
-      
-      const blob = new Blob([generatedHTML], { type: 'text/html' });
+      const blob = new Blob([fullHTML], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -411,24 +541,22 @@
       URL.revokeObjectURL(url);
     }
 
-    function togglePreview() {
-      const preview = document.getElementById('preview');
+    function toggleFullscreen() {
+      const container = document.querySelector('.container');
       
-      if (preview.style.display === 'block') {
-        preview.style.display = 'none';
-        return;
+      if (!isFullscreen) {
+        container.style.maxWidth = '100%';
+        container.style.borderRadius = '0';
+        container.style.height = '100vh';
+        document.body.style.padding = '0';
+        isFullscreen = true;
+      } else {
+        container.style.maxWidth = '900px';
+        container.style.borderRadius = '16px';
+        container.style.height = 'auto';
+        document.body.style.padding = '40px 20px';
+        isFullscreen = false;
       }
-      
-      const previewHTML = feedItems.map(item => `
-        <div class="feed-item">
-          <h3><a href="${item.link}" target="_blank">${item.title}</a></h3>
-          <div class="date">${item.pubDate}</div>
-          <div class="content">${item.description.substring(0, 200)}${item.description.length > 200 ? '...' : ''}</div>
-        </div>
-      `).join('\n');
-      
-      preview.innerHTML = previewHTML;
-      preview.style.display = 'block';
     }
   </script>
 </body>
