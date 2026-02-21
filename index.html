@@ -20,8 +20,59 @@
     }
     
     .container {
-      max-width: 720px;
+      max-width: 1080px;
       margin: 0 auto;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 28px;
+      align-items: start;
+    }
+
+    .sidebar {
+      border: 1px solid #eee;
+      border-radius: 6px;
+      padding: 14px;
+      position: sticky;
+      top: 20px;
+    }
+
+    .sidebar h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .preset-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 72vh;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .preset-btn {
+      width: 100%;
+      text-align: left;
+      border: 1px solid #e6e6e6;
+      background: #fff;
+      padding: 8px 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      color: #333;
+    }
+
+    .preset-btn:hover {
+      background: #f7f7f7;
+      border-color: #d8d8d8;
+    }
+
+    .main {
+      min-width: 0;
     }
     
     h1 {
@@ -242,66 +293,107 @@
     .footer a:hover {
       text-decoration: underline;
     }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+      }
+
+      .preset-list {
+        max-height: none;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>rss2html</h1>
     <p class="subtitle">RSS/Atom 转 HTML · 使用 CORS 代理获取订阅源</p>
-    
-    <div class="input-section" id="inputSection">
-      <div class="input-group">
-        <label for="feedUrl">订阅源 URL</label>
-        <input 
-          type="url" 
-          id="feedUrl" 
-          placeholder="https://example.com/feed.xml"
-        />
-      </div>
-      
-      <div class="input-group">
-        <label for="feedTitle">页面标题（可选）</label>
-        <input 
-          type="text" 
-          id="feedTitle" 
-          placeholder="留空使用原标题"
-        />
-      </div>
-      
-      <div>
-        <button class="btn" id="convertBtn" onclick="convertFeed()">转换</button>
-        <button class="btn btn-secondary" id="newBtn" onclick="newConversion()" style="display:none;">新建</button>
-      </div>
-      
-      <div class="status" id="status"></div>
-    </div>
-    
-    <div class="result-container" id="resultContainer">
-      <div class="result-header">
-        <h2 id="resultTitle"></h2>
-        <div class="result-actions">
-          <button class="btn btn-secondary" onclick="downloadHTML()">下载</button>
-        </div>
-      </div>
-      
-      <div class="result-meta" id="resultMeta"></div>
-      
-      <div id="resultContent"></div>
-    </div>
 
-    <div class="footer">
-      <span id="busuanzi_container_site_pv">
-        访问量 <span id="busuanzi_value_site_pv"></span>
-      </span>
-      <span style="margin: 0 8px;">·</span>
-      <span id="busuanzi_container_site_uv">
-        访客数 <span id="busuanzi_value_site_uv"></span>
-      </span>
+    <div class="layout">
+      <aside class="sidebar">
+        <h3>常用 RSS</h3>
+        <div class="preset-list">
+          <button class="preset-btn" onclick="fillPreset('Embodied/AI/LG', 'https://export.arxiv.org/api/query?search_query=(cat:cs.RO+OR+cat:cs.AI+OR+cat:cs.LG)+AND+(abs:embodied+OR+abs:%22embodied intelligence%22+OR+abs:%22vision-language%22+OR+abs:robot+OR+abs:manipulation)&sortBy=lastUpdatedDate&sortOrder=descending&start=0&max_results=100')">Embodied/AI/LG</button>
+          <button class="preset-btn" onclick="fillPreset('CoRL', 'https://export.arxiv.org/api/query?search_query=(jr:%22CoRL%22+OR+jr:%22Conference+on+Robot+Learning%22+OR+abs:%22CoRL%22+OR+abs:%22Conference+on+Robot+Learning%22)&sortBy=submittedDate&sortOrder=descending&start=0&max_results=100')">CoRL</button>
+          <button class="preset-btn" onclick="fillPreset('ICRA', 'https://export.arxiv.org/api/query?search_query=(jr:%22ICRA%22+OR+jr:%22IEEE+International+Conference+on+Robotics+and+Automation%22+OR+abs:%22ICRA%22+OR+abs:%22Robotics+and+Automation%22)&sortBy=submittedDate&sortOrder=descending&start=0&max_results=100')">ICRA</button>
+          <button class="preset-btn" onclick="fillPreset('RSS', 'https://export.arxiv.org/api/query?search_query=(jr:%22RSS%22+OR+jr:%22Robotics:+Science+and+Systems%22+OR+abs:%22Robotics+Science+and+Systems%22+OR+abs:%22RSS%22)&sortBy=submittedDate&sortOrder=descending&start=0&max_results=100')">RSS</button>
+          <button class="preset-btn" onclick="fillPreset('IROS', 'https://export.arxiv.org/api/query?search_query=(jr:%22IROS%22+OR+jr:%22Intelligent+Robots+and+Systems%22+OR+abs:%22IROS%22+OR+abs:%22Intelligent+Robots+and+Systems%22)&sortBy=submittedDate&sortOrder=descending&start=0&max_results=100')">IROS</button>
+          <button class="preset-btn" onclick="fillPreset('CVPR', 'https://export.arxiv.org/api/query?search_query=(jr:%22CVPR%22+OR+jr:%22Computer+Vision+and+Pattern+Recognition%22+OR+abs:%22CVPR%22+OR+abs:%22Computer+Vision+and+Pattern+Recognition%22)&sortBy=submittedDate&sortOrder=descending&start=0&max_results=100')">CVPR</button>
+          <button class="preset-btn" onclick="fillPreset('ICCV', 'https://export.arxiv.org/api/query?search_query=(jr:%22ICCV%22+OR+jr:%22International+Conference+on+Computer+Vision%22+OR+abs:%22ICCV%22)&sortBy=submittedDate&sortOrder=descending&start=0&max_results=100')">ICCV</button>
+          <button class="preset-btn" onclick="fillPreset('ECCV', 'https://export.arxiv.org/api/query?search_query=(jr:%22ECCV%22+OR+jr:%22European+Conference+on+Computer+Vision%22+OR+abs:%22ECCV%22)&sortBy=submittedDate&sortOrder=descending&start=0&max_results=100')">ECCV</button>
+          <button class="preset-btn" onclick="fillPreset('NeurIPS', 'https://export.arxiv.org/api/query?search_query=(jr:%22NeurIPS%22+OR+jr:%22NIPS%22+OR+jr:%22Neural+Information+Processing+Systems%22+OR+abs:%22NeurIPS%22+OR+abs:%22NIPS%22)&sortBy=submittedDate&sortOrder=descending&start=0&max_results=100')">NeurIPS</button>
+          <button class="preset-btn" onclick="fillPreset('ICML', 'https://export.arxiv.org/api/query?search_query=(jr:%22ICML%22+OR+jr:%22International+Conference+on+Machine+Learning%22+OR+abs:%22ICML%22)&sortBy=submittedDate&sortOrder=descending&start=0&max_results=100')">ICML</button>
+          <button class="preset-btn" onclick="fillPreset('ICLR', 'https://export.arxiv.org/api/query?search_query=(jr:%22ICLR%22+OR+jr:%22International+Conference+on+Learning+Representations%22+OR+abs:%22ICLR%22)&sortBy=submittedDate&sortOrder=descending&start=0&max_results=100')">ICLR</button>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="input-section" id="inputSection">
+          <div class="input-group">
+            <label for="feedUrl">订阅源 URL</label>
+            <input 
+              type="url" 
+              id="feedUrl" 
+              placeholder="https://example.com/feed.xml"
+            />
+          </div>
+          
+          <div class="input-group">
+            <label for="feedTitle">页面标题（可选）</label>
+            <input 
+              type="text" 
+              id="feedTitle" 
+              placeholder="留空使用原标题"
+            />
+          </div>
+          
+          <div>
+            <button class="btn" id="convertBtn" onclick="convertFeed()">转换</button>
+            <button class="btn btn-secondary" id="newBtn" onclick="newConversion()" style="display:none;">新建</button>
+          </div>
+          
+          <div class="status" id="status"></div>
+        </div>
+        
+        <div class="result-container" id="resultContainer">
+          <div class="result-header">
+            <h2 id="resultTitle"></h2>
+            <div class="result-actions">
+              <button class="btn btn-secondary" onclick="downloadHTML()">下载</button>
+            </div>
+          </div>
+          
+          <div class="result-meta" id="resultMeta"></div>
+          
+          <div id="resultContent"></div>
+        </div>
+
+        <div class="footer">
+          <span id="busuanzi_container_site_pv">
+            访问量 <span id="busuanzi_value_site_pv"></span>
+          </span>
+          <span style="margin: 0 8px;">·</span>
+          <span id="busuanzi_container_site_uv">
+            访客数 <span id="busuanzi_value_site_uv"></span>
+          </span>
+        </div>
+      </main>
     </div>
   </div>
 
   <script>
     let feedData = null;
+
+    function fillPreset(title, url) {
+      document.getElementById('feedTitle').value = title;
+      document.getElementById('feedUrl').value = url;
+      showStatus(`已填入：${title}`, 'success');
+    }
 
     async function fetchFeed(url) {
       // 尝试多个 CORS 代理
