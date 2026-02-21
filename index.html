@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>rss2html - RSS 转 HTML 工具</title>
+  <title>rss2html</title>
   <style>
     * {
       margin: 0;
@@ -12,119 +12,117 @@
     }
     
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #fff;
+      color: #333;
+      line-height: 1.6;
       padding: 40px 20px;
     }
     
     .container {
-      max-width: 900px;
+      max-width: 720px;
       margin: 0 auto;
-      background: white;
-      border-radius: 16px;
-      padding: 40px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
     }
     
     h1 {
-      color: #333;
-      margin-bottom: 10px;
-      font-size: 2em;
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #000;
     }
     
     .subtitle {
       color: #666;
-      margin-bottom: 30px;
+      font-size: 14px;
+      margin-bottom: 32px;
     }
     
     .input-group {
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
     
     label {
       display: block;
-      margin-bottom: 8px;
-      color: #555;
+      margin-bottom: 6px;
+      color: #333;
+      font-size: 14px;
       font-weight: 500;
     }
     
     input[type="text"],
     input[type="url"] {
       width: 100%;
-      padding: 12px 16px;
-      border: 2px solid #e0e0e0;
-      border-radius: 8px;
-      font-size: 16px;
-      transition: border-color 0.3s;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      background: #fff;
     }
     
     input:focus {
       outline: none;
-      border-color: #667eea;
+      border-color: #000;
     }
     
     .btn {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+      background: #000;
+      color: #fff;
       border: none;
-      padding: 14px 28px;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 4px;
+      font-size: 14px;
       cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-      margin-right: 10px;
-      margin-bottom: 10px;
+      margin-right: 8px;
+      margin-bottom: 8px;
     }
     
     .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+      background: #333;
     }
     
     .btn:disabled {
-      opacity: 0.6;
+      opacity: 0.5;
       cursor: not-allowed;
-      transform: none;
     }
     
     .btn-secondary {
-      background: #f0f0f0;
-      color: #333;
+      background: #fff;
+      color: #000;
+      border: 1px solid #ddd;
     }
     
     .btn-secondary:hover {
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      background: #f5f5f5;
     }
     
     .status {
-      margin-top: 20px;
-      padding: 15px;
-      border-radius: 8px;
+      margin-top: 16px;
+      padding: 10px 12px;
+      border-radius: 4px;
+      font-size: 14px;
       display: none;
     }
     
     .status.success {
-      background: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
+      background: #f0f9f0;
+      color: #1a7f1a;
+      border: 1px solid #c7ebc7;
     }
     
     .status.error {
-      background: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
+      background: #fef0f0;
+      color: #c71a1a;
+      border: 1px solid #ebc7c7;
     }
     
     .status.loading {
-      background: #d1ecf1;
-      color: #0c5460;
-      border: 1px solid #bee5eb;
+      background: #f0f7ff;
+      color: #1a5f7f;
+      border: 1px solid #c7dceb;
     }
     
     .result-container {
-      margin-top: 30px;
+      margin-top: 32px;
       display: none;
     }
     
@@ -132,100 +130,106 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 15px;
-      border-bottom: 2px solid #667eea;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #eee;
     }
     
     .result-header h2 {
-      color: #667eea;
-      font-size: 1.5em;
+      font-size: 18px;
+      font-weight: 600;
+      color: #000;
+    }
+    
+    .result-meta {
+      color: #999;
+      font-size: 13px;
+      margin-bottom: 24px;
     }
     
     .result-actions {
       display: flex;
-      gap: 10px;
-    }
-    
-    .result-content {
-      background: #fafafa;
-      border-radius: 8px;
-      padding: 20px;
-      max-height: 600px;
-      overflow-y: auto;
+      gap: 8px;
     }
     
     .feed-item {
-      background: white;
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 20px 0;
+      border-bottom: 1px solid #eee;
     }
     
     .feed-item:last-child {
-      margin-bottom: 0;
+      border-bottom: none;
     }
     
     .feed-item h3 {
-      margin-bottom: 10px;
-      font-size: 1.3em;
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 8px;
     }
     
     .feed-item h3 a {
-      color: #333;
+      color: #000;
       text-decoration: none;
     }
     
     .feed-item h3 a:hover {
-      color: #667eea;
+      text-decoration: underline;
     }
     
     .feed-item .meta {
       display: flex;
-      gap: 15px;
+      gap: 12px;
       margin-bottom: 12px;
-      font-size: 0.85em;
-    }
-    
-    .feed-item .date {
+      font-size: 12px;
       color: #999;
     }
     
-    .feed-item .source {
-      color: #667eea;
-    }
-    
     .feed-item .content {
-      color: #555;
-      line-height: 1.8;
+      font-size: 14px;
+      color: #444;
+      line-height: 1.7;
     }
     
     .feed-item .content img {
       max-width: 100%;
       height: auto;
-      border-radius: 8px;
-      margin: 10px 0;
+      margin: 12px 0;
     }
     
-    .hidden {
-      display: none !important;
+    .feed-item .content p {
+      margin-bottom: 12px;
+    }
+    
+    .feed-item .content p:last-child {
+      margin-bottom: 0;
     }
     
     .input-section {
-      transition: opacity 0.3s;
+      transition: opacity 0.2s;
     }
     
     .input-section.collapsed {
-      opacity: 0.3;
+      opacity: 0.4;
       pointer-events: none;
+    }
+    
+    .source-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: #666;
+      font-size: 13px;
+      text-decoration: none;
+    }
+    
+    .source-link:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>📰 rss2html</h1>
-    <p class="subtitle">将 RSS/Atom 订阅源转换为美观的 HTML 页面</p>
+    <h1>rss2html</h1>
+    <p class="subtitle">RSS/Atom 转 HTML</p>
     
     <div class="input-section" id="inputSection">
       <div class="input-group">
@@ -234,7 +238,6 @@
           type="url" 
           id="feedUrl" 
           placeholder="https://example.com/feed.xml"
-          value="https://feeds.feedburner.com/36kr"
         />
       </div>
       
@@ -243,17 +246,13 @@
         <input 
           type="text" 
           id="feedTitle" 
-          placeholder="留空则使用订阅源原标题"
+          placeholder="留空使用原标题"
         />
       </div>
       
       <div>
-        <button class="btn" id="convertBtn" onclick="convertFeed()">
-          🔄 转换
-        </button>
-        <button class="btn btn-secondary" id="newBtn" onclick="newConversion()" style="display:none;">
-          ➕ 新建
-        </button>
+        <button class="btn" id="convertBtn" onclick="convertFeed()">转换</button>
+        <button class="btn btn-secondary" id="newBtn" onclick="newConversion()" style="display:none;">新建</button>
       </div>
       
       <div class="status" id="status"></div>
@@ -263,22 +262,18 @@
       <div class="result-header">
         <h2 id="resultTitle"></h2>
         <div class="result-actions">
-          <button class="btn btn-secondary" onclick="downloadHTML()">
-            💾 下载
-          </button>
-          <button class="btn btn-secondary" onclick="toggleFullscreen()">
-            🔲 全屏
-          </button>
+          <button class="btn btn-secondary" onclick="downloadHTML()">下载</button>
         </div>
       </div>
       
-      <div class="result-content" id="resultContent"></div>
+      <div class="result-meta" id="resultMeta"></div>
+      
+      <div id="resultContent"></div>
     </div>
   </div>
 
   <script>
     let feedData = null;
-    let isFullscreen = false;
 
     async function fetchFeed(url) {
       const corsProxy = 'https://api.allorigins.win/raw?url=';
@@ -325,7 +320,6 @@
         const author = item.querySelector('author')?.textContent || 
                       item.querySelector('dc\\:creator')?.textContent || '';
         
-        // 清理描述中的脚本和样式
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = description;
         const scripts = tempDiv.querySelectorAll('script, style');
@@ -343,20 +337,17 @@
       const sourceLink = feed.link;
       
       const headerHTML = sourceLink ? `
-        <p style="margin-bottom: 20px;">
-          <a href="${sourceLink}" target="_blank" class="source">
-            🔗 访问原始订阅源
-          </a>
-        </p>
+        <a href="${sourceLink}" target="_blank" class="source-link">
+          ← 返回原始订阅源
+        </a>
       ` : '';
       
       const itemHTML = feed.items.map((item, index) => `
         <article class="feed-item">
           <h3><a href="${item.link}" target="_blank">${item.title}</a></h3>
           <div class="meta">
-            <span class="date">📅 ${formatDate(item.pubDate)}</span>
-            ${item.author ? `<span class="author">✍️ ${item.author}</span>` : ''}
-            <span class="source">🔗 #${index + 1}</span>
+            <span>${formatDate(item.pubDate)}</span>
+            ${item.author ? `<span>· ${item.author}</span>` : ''}
           </div>
           <div class="content">${item.description}</div>
         </article>
@@ -364,21 +355,18 @@
 
       return `
         ${headerHTML}
-        <div style="color: #999; margin-bottom: 20px;">共 ${feed.items.length} 篇文章</div>
         ${itemHTML}
       `;
     }
 
     function formatDate(dateStr) {
-      if (!dateStr) return '未知日期';
+      if (!dateStr) return '';
       const date = new Date(dateStr);
       if (isNaN(date.getTime())) return dateStr;
-      return date.toLocaleString('zh-CN', {
+      return date.toLocaleDateString('zh-CN', {
         year: 'numeric',
         month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
+        day: '2-digit'
       });
     }
 
@@ -400,7 +388,7 @@
       
       const btn = document.getElementById('convertBtn');
       btn.disabled = true;
-      btn.textContent = '⏳ 处理中...';
+      btn.textContent = '处理中...';
       
       try {
         showStatus('正在获取订阅源...', 'loading');
@@ -414,6 +402,7 @@
         feedData = { feed, customTitle };
         
         document.getElementById('resultTitle').textContent = customTitle || feed.title;
+        document.getElementById('resultMeta').textContent = `共 ${feed.items.length} 篇文章`;
         document.getElementById('resultContent').innerHTML = renderFeed(feed, customTitle);
         
         document.getElementById('inputSection').classList.add('collapsed');
@@ -421,13 +410,13 @@
         document.getElementById('newBtn').style.display = 'inline-block';
         document.getElementById('convertBtn').style.display = 'none';
         
-        showStatus(`✅ 成功！共 ${feed.items.length} 篇文章`, 'success');
+        showStatus(`成功！共 ${feed.items.length} 篇文章`, 'success');
         
       } catch (error) {
-        showStatus(`❌ 错误：${error.message}`, 'error');
+        showStatus(`错误：${error.message}`, 'error');
       } finally {
         btn.disabled = false;
-        btn.textContent = '🔄 转换';
+        btn.textContent = '转换';
       }
     }
 
@@ -440,10 +429,6 @@
       document.getElementById('status').style.display = 'none';
       document.getElementById('feedUrl').value = '';
       document.getElementById('feedTitle').value = '';
-      
-      if (isFullscreen) {
-        toggleFullscreen();
-      }
     }
 
     function downloadHTML() {
@@ -459,73 +444,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title}</title>
   <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      max-width: 900px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 720px;
       margin: 0 auto;
-      padding: 20px;
-      line-height: 1.8;
-      background: #fafafa;
+      padding: 40px 20px;
+      line-height: 1.6;
+      color: #333;
     }
-    header {
-      text-align: center;
-      padding: 40px 0;
-      border-bottom: 2px solid #667eea;
-      margin-bottom: 30px;
-    }
-    h1 {
-      color: #667eea;
-      margin: 0;
-    }
+    h1 { font-size: 24px; font-weight: 600; margin-bottom: 24px; }
     .feed-item {
-      background: white;
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 20px 0;
+      border-bottom: 1px solid #eee;
     }
     .feed-item h2 {
-      margin: 0 0 10px 0;
-      font-size: 1.3em;
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 8px;
     }
     .feed-item h2 a {
-      color: #333;
+      color: #000;
       text-decoration: none;
     }
     .feed-item h2 a:hover {
-      color: #667eea;
+      text-decoration: underline;
     }
     .meta {
-      display: flex;
-      gap: 15px;
-      margin-bottom: 12px;
-      font-size: 0.85em;
+      font-size: 12px;
       color: #999;
+      margin-bottom: 12px;
     }
     .content {
-      color: #555;
+      font-size: 14px;
+      color: #444;
     }
-    .content img {
-      max-width: 100%;
-      height: auto;
-    }
+    .content img { max-width: 100%; height: auto; margin: 12px 0; }
     footer {
-      text-align: center;
-      padding: 30px 0;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
       color: #999;
-      font-size: 0.9em;
+      font-size: 12px;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>${title}</h1>
-  </header>
+  <h1>${title}</h1>
   <main>
     ${renderFeed(feed, customTitle)}
   </main>
   <footer>
-    <p>Generated by rss2html · ${new Date().toLocaleDateString('zh-CN')}</p>
+    Generated by rss2html · ${new Date().toLocaleDateString('zh-CN')}
   </footer>
 </body>
 </html>`;
@@ -539,24 +509,6 @@
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    }
-
-    function toggleFullscreen() {
-      const container = document.querySelector('.container');
-      
-      if (!isFullscreen) {
-        container.style.maxWidth = '100%';
-        container.style.borderRadius = '0';
-        container.style.height = '100vh';
-        document.body.style.padding = '0';
-        isFullscreen = true;
-      } else {
-        container.style.maxWidth = '900px';
-        container.style.borderRadius = '16px';
-        container.style.height = 'auto';
-        document.body.style.padding = '40px 20px';
-        isFullscreen = false;
-      }
     }
   </script>
 </body>
