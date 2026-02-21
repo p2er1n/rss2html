@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>rss2html - RSS 转 HTML 工具</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 2em;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+    }
+    
+    .input-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #555;
+      font-weight: 500;
+    }
+    
+    input[type="text"],
+    input[type="url"] {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+    
+    .btn-secondary:hover {
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    
+    .status {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      display: none;
+    }
+    
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .status.loading {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    
+    .preview {
+      margin-top: 30px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 20px;
+      max-height: 400px;
+      overflow-y: auto;
+      display: none;
+    }
+    
+    .feed-item {
+      border-bottom: 1px solid #eee;
+      padding: 15px 0;
+    }
+    
+    .feed-item:last-child {
+      border-bottom: none;
+    }
+    
+    .feed-item h3 {
+      margin-bottom: 8px;
+    }
+    
+    .feed-item h3 a {
+      color: #667eea;
+      text-decoration: none;
+    }
+    
+    .feed-item h3 a:hover {
+      text-decoration: underline;
+    }
+    
+    .feed-item .date {
+      color: #999;
+      font-size: 0.85em;
+      margin-bottom: 8px;
+    }
+    
+    .feed-item .content {
+      color: #555;
+      line-height: 1.6;
+    }
+    
+    .actions {
+      margin-top: 20px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📰 rss2html</h1>
+    <p class="subtitle">将 RSS/Atom 订阅源转换为静态 HTML 页面</p>
+    
+    <div class="input-group">
+      <label for="feedUrl">订阅源 URL</label>
+      <input 
+        type="url" 
+        id="feedUrl" 
+        placeholder="https://example.com/feed.xml"
+        value="https://feeds.feedburner.com/36kr"
+      />
+    </div>
+    
+    <div class="input-group">
+      <label for="feedTitle">页面标题</label>
+      <input 
+        type="text" 
+        id="feedTitle" 
+        placeholder="自定义标题（可选）"
+      />
+    </div>
+    
+    <div>
+      <button class="btn" id="convertBtn" onclick="convertFeed()">
+        🔄 转换
+      </button>
+      <button class="btn btn-secondary" id="downloadBtn" onclick="downloadHTML()" style="display:none;">
+        💾 下载 HTML
+      </button>
+      <button class="btn btn-secondary" id="previewBtn" onclick="togglePreview()" style="display:none;">
+        👁️ 预览
+      </button>
+    </div>
+    
+    <div class="status" id="status"></div>
+    
+    <div class="preview" id="preview"></div>
+    
+    <div class="actions" id="actions"></div>
+  </div>
+
+  <script>
+    let generatedHTML = '';
+    let feedItems = [];
+
+    async function fetchFeed(url) {
+      // 使用 CORS 代理解决跨域问题
+      const corsProxy = 'https://api.allorigins.win/raw?url=';
+      const response = await fetch(corsProxy + encodeURIComponent(url));
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const xml = await response.text();
+      return parseXML(xml);
+    }
+
+    function parseXML(xml) {
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xml, 'text/xml');
+      
+      // 检查解析错误
+      const parseError = xmlDoc.querySelector('parsererror');
+      if (parseError) {
+        throw new Error('XML 解析失败');
+      }
+      
+      // 尝试 RSS 2.0
+      let items = xmlDoc.querySelectorAll('item');
+      let title = xmlDoc.querySelector('channel > title')?.textContent || 'RSS Feed';
+      
+      // 尝试 Atom
+      if (items.length === 0) {
+        items = xmlDoc.querySelectorAll('entry');
+        title = xmlDoc.querySelector('feed > title')?.textContent || 'Atom Feed';
+      }
+      
+      const feedItems = Array.from(items).map(item => {
+        const title = item.querySelector('title')?.textContent || '无标题';
+        const link = item.querySelector('link')?.getAttribute('href') || 
+                     item.querySelector('link')?.textContent || '#';
+        const description = item.querySelector('description')?.textContent || 
+                           item.querySelector('summary')?.textContent || 
+                           item.querySelector('content')?.textContent || '';
+        const pubDate = item.querySelector('pubDate')?.textContent || 
+                       item.querySelector('published')?.textContent || 
+                       item.querySelector('updated')?.textContent || '';
+        
+        return { title, link, description, pubDate };
+      });
+      
+      return { title, items: feedItems };
+    }
+
+    function generateHTML(feedTitle, items) {
+      const itemHTML = items.map(item => `
+        <article class="feed-item">
+          <h2><a href="${item.link}" target="_blank">${item.title}</a></h2>
+          <time class="date">${item.pubDate}</time>
+          <div class="content">${item.description}</div>
+        </article>
+      `).join('\n');
+
+      return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${feedTitle}</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+      background: #fafafa;
+    }
+    header {
+      text-align: center;
+      padding: 40px 0;
+      border-bottom: 2px solid #667eea;
+      margin-bottom: 30px;
+    }
+    h1 {
+      color: #667eea;
+      margin: 0;
+    }
+    .feed-item {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .feed-item h2 {
+      margin: 0 0 10px 0;
+      font-size: 1.3em;
+    }
+    .feed-item h2 a {
+      color: #333;
+      text-decoration: none;
+    }
+    .feed-item h2 a:hover {
+      color: #667eea;
+    }
+    .date {
+      color: #999;
+      font-size: 0.85em;
+    }
+    .content {
+      margin-top: 15px;
+      color: #555;
+    }
+    footer {
+      text-align: center;
+      padding: 30px 0;
+      color: #999;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>${feedTitle}</h1>
+  </header>
+  <main>
+    ${itemHTML}
+  </main>
+  <footer>
+    <p>Generated by rss2html</p>
+  </footer>
+</body>
+</html>`;
+    }
+
+    function showStatus(message, type) {
+      const status = document.getElementById('status');
+      status.textContent = message;
+      status.className = `status ${type}`;
+      status.style.display = 'block';
+    }
+
+    async function convertFeed() {
+      const url = document.getElementById('feedUrl').value.trim();
+      const customTitle = document.getElementById('feedTitle').value.trim();
+      
+      if (!url) {
+        showStatus('请输入订阅源 URL', 'error');
+        return;
+      }
+      
+      const btn = document.getElementById('convertBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ 处理中...';
+      
+      try {
+        showStatus('正在获取订阅源...', 'loading');
+        
+        const feed = await fetchFeed(url);
+        const title = customTitle || feed.title;
+        
+        if (feed.items.length === 0) {
+          throw new Error('未找到任何文章');
+        }
+        
+        generatedHTML = generateHTML(title, feed.items);
+        feedItems = feed.items;
+        
+        showStatus(`✅ 成功！共 ${feed.items.length} 篇文章`, 'success');
+        
+        document.getElementById('downloadBtn').style.display = 'inline-block';
+        document.getElementById('previewBtn').style.display = 'inline-block';
+        
+      } catch (error) {
+        showStatus(`❌ 错误：${error.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔄 转换';
+      }
+    }
+
+    function downloadHTML() {
+      if (!generatedHTML) return;
+      
+      const blob = new Blob([generatedHTML], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `feed-${Date.now()}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function togglePreview() {
+      const preview = document.getElementById('preview');
+      
+      if (preview.style.display === 'block') {
+        preview.style.display = 'none';
+        return;
+      }
+      
+      const previewHTML = feedItems.map(item => `
+        <div class="feed-item">
+          <h3><a href="${item.link}" target="_blank">${item.title}</a></h3>
+          <div class="date">${item.pubDate}</div>
+          <div class="content">${item.description.substring(0, 200)}${item.description.length > 200 ? '...' : ''}</div>
+        </div>
+      `).join('\n');
+      
+      preview.innerHTML = previewHTML;
+      preview.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "rss2html",
+  "version": "1.0.0",
+  "description": "纯前端 RSS/Atom 订阅源转 HTML 工具",
+  "keywords": [
+    "rss",
+    "atom",
+    "html",
+    "feed",
+    "converter",
+    "frontend"
+  ],
+  "author": "管理员大神",
+  "license": "MIT"
+}
