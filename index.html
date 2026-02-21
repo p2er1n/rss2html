@@ -229,7 +229,7 @@
 <body>
   <div class="container">
     <h1>rss2html</h1>
-    <p class="subtitle">RSS/Atom 转 HTML</p>
+    <p class="subtitle">RSS/Atom 转 HTML · 使用 CORS 代理获取订阅源</p>
     
     <div class="input-section" id="inputSection">
       <div class="input-group">
@@ -276,15 +276,38 @@
     let feedData = null;
 
     async function fetchFeed(url) {
-      const corsProxy = 'https://api.allorigins.win/raw?url=';
-      const response = await fetch(corsProxy + encodeURIComponent(url));
+      // 尝试多个 CORS 代理
+      const proxies = [
+        'https://api.allorigins.win/raw?url=',
+        'https://corsproxy.io/?',
+        'https://corsproxy.org/?',
+        'https://thingproxy.freeboard.io/fetch/',
+      ];
       
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      let lastError;
+      
+      for (const proxy of proxies) {
+        try {
+          const response = await fetch(proxy + encodeURIComponent(url), {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/xml, text/xml'
+            }
+          });
+          
+          if (response.ok) {
+            const xml = await response.text();
+            if (xml.trim().length > 0) {
+              return parseXML(xml);
+            }
+          }
+        } catch (error) {
+          lastError = error;
+          continue;
+        }
       }
       
-      const xml = await response.text();
-      return parseXML(xml);
+      throw lastError || new Error('所有代理均不可用，请检查网络连接或订阅源 URL');
     }
 
     function parseXML(xml) {
