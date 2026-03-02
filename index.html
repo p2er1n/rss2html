@@ -647,6 +647,11 @@
         return;
       }
 
+      if (!isValidFeedUrl(url)) {
+        showStatus('请输入有效的订阅源 URL（需以 http:// 或 https:// 开头）', 'error');
+        return;
+      }
+
       const favorites = getFavorites();
       const existingIndex = favorites.findIndex(item => item.url === url);
       const favorite = { title, url };
@@ -825,12 +830,27 @@
       status.style.display = 'block';
     }
 
+    function isValidFeedUrl(url) {
+      try {
+        const parsedUrl = new URL(url);
+        const isHttp = parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
+        return isHttp && Boolean(parsedUrl.hostname);
+      } catch (error) {
+        return false;
+      }
+    }
+
     async function convertFeed() {
       const url = document.getElementById('feedUrl').value.trim();
       const customTitle = document.getElementById('feedTitle').value.trim();
       
       if (!url) {
         showStatus('请输入订阅源 URL', 'error');
+        return;
+      }
+
+      if (!isValidFeedUrl(url)) {
+        showStatus('请输入有效的订阅源 URL（需以 http:// 或 https:// 开头）', 'error');
         return;
       }
       
