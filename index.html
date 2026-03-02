@@ -45,6 +45,12 @@
       margin-bottom: 10px;
     }
 
+    .sidebar-section + .sidebar-section {
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid #f0f0f0;
+    }
+
     .preset-list {
       display: flex;
       flex-direction: column;
@@ -102,6 +108,30 @@
     .sidebar-empty {
       color: #888;
       font-size: 13px;
+    }
+
+    .usage-item {
+      display: flex;
+      gap: 6px;
+      align-items: stretch;
+    }
+
+    .usage-item .preset-btn {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .usage-count {
+      min-width: 34px;
+      padding: 0 8px;
+      border: 1px solid #e6e6e6;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #888;
+      background: #fff;
     }
 
     .main {
@@ -381,8 +411,14 @@
 
     <div class="layout">
       <aside class="sidebar">
-        <h3>我的收藏</h3>
-        <div class="preset-list" id="favoritesList"></div>
+        <div class="sidebar-section">
+          <h3>我的收藏</h3>
+          <div class="preset-list" id="favoritesList"></div>
+        </div>
+        <div class="sidebar-section">
+          <h3>最近常用</h3>
+          <div class="preset-list" id="recentUsageList"></div>
+        </div>
       </aside>
 
       <main class="main">
@@ -443,6 +479,8 @@
   <script>
     let feedData = null;
     const FAVORITES_KEY = 'rss2htmlFavorites';
+    const RECENT_USAGE_KEY = 'rss2htmlRecentUsage';
+    const RECENT_USAGE_LIMIT = 8;
 
     function getFavorites() {
       try {
@@ -459,6 +497,31 @@
       localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
     }
 
+    function getRecentUsage() {
+      try {
+        const stored = localStorage.getItem(RECENT_USAGE_KEY);
+        if (!stored) return [];
+        const recentUsage = JSON.parse(stored);
+        return Array.isArray(recentUsage) ? recentUsage : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function setRecentUsage(recentUsage) {
+      localStorage.setItem(RECENT_USAGE_KEY, JSON.stringify(recentUsage));
+    }
+
+    function fillFeedInputs(title, url, message) {
+      document.getElementById('feedTitle').value = title;
+      document.getElementById('feedUrl').value = url;
+      updateFavoriteButtonState();
+
+      if (message) {
+        showStatus(message, 'success');
+      }
+    }
+
     function isCurrentUrlFavorited() {
       const url = document.getElementById('feedUrl').value.trim();
       if (!url) return false;
@@ -473,6 +536,47 @@
       favoriteBtn.classList.toggle('is-favorited', favorited);
       favoriteBtn.title = favorited ? '该 RSS 已收藏' : '收藏当前';
       favoriteBtn.setAttribute('aria-label', favorited ? '该 RSS 已收藏' : '收藏当前');
+    }
+
+    function renderRecentUsage() {
+      const recentUsageList = document.getElementById('recentUsageList');
+      const recentUsage = getRecentUsage()
+        .sort((a, b) => {
+          if (b.count !== a.count) return b.count - a.count;
+          return (b.lastAccessed || 0) - (a.lastAccessed || 0);
+        })
+        .slice(0, RECENT_USAGE_LIMIT);
+
+      recentUsageList.innerHTML = '';
+
+      if (recentUsage.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'sidebar-empty';
+        empty.textContent = '成功转换过的 RSS 会按访问频率出现在这里。';
+        recentUsageList.appendChild(empty);
+        return;
+      }
+
+      recentUsage.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'usage-item';
+
+        const loadButton = document.createElement('button');
+        loadButton.className = 'preset-btn';
+        loadButton.type = 'button';
+        loadButton.textContent = item.title;
+        loadButton.title = item.url;
+        loadButton.onclick = () => fillRecentUsage(index);
+
+        const count = document.createElement('div');
+        count.className = 'usage-count';
+        count.title = `访问 ${item.count} 次`;
+        count.textContent = item.count;
+
+        row.appendChild(loadButton);
+        row.appendChild(count);
+        recentUsageList.appendChild(row);
+      });
     }
 
     function renderFavorites() {
@@ -518,10 +622,20 @@
       const favorite = favorites[index];
       if (!favorite) return;
 
-      document.getElementById('feedTitle').value = favorite.title;
-      document.getElementById('feedUrl').value = favorite.url;
-      updateFavoriteButtonState();
-      showStatus(`已填入收藏：${favorite.title}`, 'success');
+      fillFeedInputs(favorite.title, favorite.url, `已填入收藏：${favorite.title}`);
+    }
+
+    function fillRecentUsage(index) {
+      const recentUsage = getRecentUsage()
+        .sort((a, b) => {
+          if (b.count !== a.count) return b.count - a.count;
+          return (b.lastAccessed || 0) - (a.lastAccessed || 0);
+        })
+        .slice(0, RECENT_USAGE_LIMIT);
+      const item = recentUsage[index];
+      if (!item) return;
+
+      fillFeedInputs(item.title, item.url, `已填入最近常用：${item.title}`);
     }
 
     function saveCurrentFavorite() {
@@ -560,6 +674,30 @@
       if (removed) {
         showStatus(`已删除收藏：${removed.title}`, 'success');
       }
+    }
+
+    function trackRecentUsage(url, title) {
+      const recentUsage = getRecentUsage();
+      const existingIndex = recentUsage.findIndex(item => item.url === url);
+
+      if (existingIndex >= 0) {
+        recentUsage[existingIndex] = {
+          ...recentUsage[existingIndex],
+          title,
+          count: (recentUsage[existingIndex].count || 0) + 1,
+          lastAccessed: Date.now()
+        };
+      } else {
+        recentUsage.push({
+          title,
+          url,
+          count: 1,
+          lastAccessed: Date.now()
+        });
+      }
+
+      setRecentUsage(recentUsage);
+      renderRecentUsage();
     }
 
     async function fetchFeed(url) {
@@ -708,6 +846,8 @@
         if (feed.items.length === 0) {
           throw new Error('未找到任何文章');
         }
+
+        trackRecentUsage(url, customTitle || feed.title);
         
         feedData = { feed, customTitle };
         
@@ -824,6 +964,7 @@
 
     document.getElementById('feedUrl').addEventListener('input', updateFavoriteButtonState);
     renderFavorites();
+    renderRecentUsage();
     updateFavoriteButtonState();
   </script>
   
