@@ -71,6 +71,39 @@
       border-color: #d8d8d8;
     }
 
+    .favorite-item {
+      display: flex;
+      gap: 6px;
+      align-items: stretch;
+    }
+
+    .favorite-item .preset-btn {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .favorite-delete {
+      border: 1px solid #e6e6e6;
+      background: #fff;
+      color: #999;
+      border-radius: 4px;
+      width: 34px;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .favorite-delete:hover {
+      color: #333;
+      background: #f7f7f7;
+      border-color: #d8d8d8;
+    }
+
+    .sidebar-empty {
+      color: #888;
+      font-size: 13px;
+    }
+
     .main {
       min-width: 0;
     }
@@ -144,6 +177,38 @@
     
     .btn-secondary:hover {
       background: #f5f5f5;
+    }
+
+    .icon-btn {
+      min-width: 40px;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-family: "Times New Roman", Georgia, serif;
+      line-height: 1;
+      color: #666;
+      border-color: transparent;
+      background: transparent;
+    }
+
+    .icon-btn.is-favorited {
+      color: #111;
+      border-color: #e6e6e6;
+      background: #fafafa;
+    }
+
+    .icon-btn.is-favorited:hover {
+      background: #f3f3f3;
+    }
+
+    .icon-btn:hover {
+      color: #111;
+      border-color: #ececec;
+      background: #fafafa;
     }
     
     .status {
@@ -316,22 +381,8 @@
 
     <div class="layout">
       <aside class="sidebar">
-        <h3>常用 RSS</h3>
-        <div class="preset-list">
-          <button class="preset-btn" onclick="fillPreset('VLA (RO/AI/LG)', 'https://export.arxiv.org/api/query?search_query=(cat:cs.RO+OR+cat:cs.AI+OR+cat:cs.LG)+AND+(abs:VLA+OR+abs:%22Vision-Language-Action%22)&sortBy=lastUpdatedDate&sortOrder=descending&start=0&max_results=100')">VLA (RO/AI/LG)</button>
-          <button class="preset-btn" onclick="fillPreset('Embodied/AI/LG', 'https://export.arxiv.org/api/query?search_query=(cat:cs.RO+OR+cat:cs.AI+OR+cat:cs.LG)+AND+(abs:embodied+OR+abs:%22embodied intelligence%22+OR+abs:%22vision-language%22+OR+abs:robot+OR+abs:manipulation)&sortBy=lastUpdatedDate&sortOrder=descending&start=0&max_results=100')">Embodied/AI/LG</button>
-          <button class="preset-btn" onclick="fillPreset('CoRL', 'https://export.arxiv.org/api/query?search_query=(jr:%22CoRL%22+OR+jr:%22Conference+on+Robot+Learning%22+OR+abs:%22CoRL%22+OR+abs:%22Conference+on+Robot+Learning%22)&sortBy=submittedDate&sortOrder=descending&start=0&max_results=100')">CoRL</button>
-          <button class="preset-btn" onclick="fillPreset('ICRA', 'https://export.arxiv.org/api/query?search_query=(jr:%22ICRA%22+OR+jr:%22IEEE+International+Conference+on+Robotics+and+Automation%22+OR+abs:%22ICRA%22+OR+abs:%22Robotics+and+Automation%22)&sortBy=submittedDate&sortOrder=descending&start=0&max_results=100')">ICRA</button>
-          <button class="preset-btn" onclick="fillPreset('RSS', 'https://export.arxiv.org/api/query?search_query=(jr:%22RSS%22+OR+jr:%22Robotics:+Science+and+Systems%22+OR+abs:%22Robotics+Science+and+Systems%22+OR+abs:%22RSS%22)&sortBy=submittedDate&sortOrder=descending&start=0&max_results=100')">RSS</button>
-          <button class="preset-btn" onclick="fillPreset('IROS', 'https://export.arxiv.org/api/query?search_query=(jr:%22IROS%22+OR+jr:%22Intelligent+Robots+and+Systems%22+OR+abs:%22IROS%22+OR+abs:%22Intelligent+Robots+and+Systems%22)&sortBy=submittedDate&sortOrder=descending&start=0&max_results=100')">IROS</button>
-          <button class="preset-btn" onclick="fillPreset('CVPR', 'https://export.arxiv.org/api/query?search_query=(jr:%22CVPR%22+OR+jr:%22Computer+Vision+and+Pattern+Recognition%22+OR+abs:%22CVPR%22+OR+abs:%22Computer+Vision+and+Pattern+Recognition%22)&sortBy=submittedDate&sortOrder=descending&start=0&max_results=100')">CVPR</button>
-          <button class="preset-btn" onclick="fillPreset('ICCV', 'https://export.arxiv.org/api/query?search_query=(jr:%22ICCV%22+OR+jr:%22International+Conference+on+Computer+Vision%22+OR+abs:%22ICCV%22)&sortBy=submittedDate&sortOrder=descending&start=0&max_results=100')">ICCV</button>
-          <button class="preset-btn" onclick="fillPreset('ECCV', 'https://export.arxiv.org/api/query?search_query=(jr:%22ECCV%22+OR+jr:%22European+Conference+on+Computer+Vision%22+OR+abs:%22ECCV%22)&sortBy=submittedDate&sortOrder=descending&start=0&max_results=100')">ECCV</button>
-          <button class="preset-btn" onclick="fillPreset('NeurIPS', 'https://export.arxiv.org/api/query?search_query=(jr:%22NeurIPS%22+OR+jr:%22NIPS%22+OR+jr:%22Neural+Information+Processing+Systems%22+OR+abs:%22NeurIPS%22+OR+abs:%22NIPS%22)&sortBy=submittedDate&sortOrder=descending&start=0&max_results=100')">NeurIPS</button>
-          <button class="preset-btn" onclick="fillPreset('ICML', 'https://export.arxiv.org/api/query?search_query=(jr:%22ICML%22+OR+jr:%22International+Conference+on+Machine+Learning%22+OR+abs:%22ICML%22)&sortBy=submittedDate&sortOrder=descending&start=0&max_results=100')">ICML</button>
-          <button class="preset-btn" onclick="fillPreset('ICLR', 'https://export.arxiv.org/api/query?search_query=(jr:%22ICLR%22+OR+jr:%22International+Conference+on+Learning+Representations%22+OR+abs:%22ICLR%22)&sortBy=submittedDate&sortOrder=descending&start=0&max_results=100')">ICLR</button>
-          <button class="preset-btn" onclick="fillPreset('AAAI', 'https://export.arxiv.org/api/query?search_query=(jr:%22AAAI%22+OR+jr:%22AAAI+Conference+on+Artificial+Intelligence%22+OR+abs:%22AAAI%22)&sortBy=submittedDate&sortOrder=descending&start=0&max_results=100')">AAAI</button>
-        </div>
+        <h3>我的收藏</h3>
+        <div class="preset-list" id="favoritesList"></div>
       </aside>
 
       <main class="main">
@@ -356,6 +407,7 @@
           
           <div>
             <button class="btn" id="convertBtn" onclick="convertFeed()">转换</button>
+            <button class="btn btn-secondary icon-btn" id="favoriteBtn" type="button" onclick="saveCurrentFavorite()" title="收藏当前" aria-label="收藏当前">☆</button>
             <button class="btn btn-secondary" id="newBtn" onclick="newConversion()" style="display:none;">新建</button>
           </div>
           
@@ -390,11 +442,124 @@
 
   <script>
     let feedData = null;
+    const FAVORITES_KEY = 'rss2htmlFavorites';
 
-    function fillPreset(title, url) {
-      document.getElementById('feedTitle').value = title;
-      document.getElementById('feedUrl').value = url;
-      showStatus(`已填入：${title}`, 'success');
+    function getFavorites() {
+      try {
+        const stored = localStorage.getItem(FAVORITES_KEY);
+        if (!stored) return [];
+        const favorites = JSON.parse(stored);
+        return Array.isArray(favorites) ? favorites : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function setFavorites(favorites) {
+      localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+    }
+
+    function isCurrentUrlFavorited() {
+      const url = document.getElementById('feedUrl').value.trim();
+      if (!url) return false;
+      return getFavorites().some(item => item.url === url);
+    }
+
+    function updateFavoriteButtonState() {
+      const favoriteBtn = document.getElementById('favoriteBtn');
+      const favorited = isCurrentUrlFavorited();
+
+      favoriteBtn.textContent = favorited ? '★' : '☆';
+      favoriteBtn.classList.toggle('is-favorited', favorited);
+      favoriteBtn.title = favorited ? '该 RSS 已收藏' : '收藏当前';
+      favoriteBtn.setAttribute('aria-label', favorited ? '该 RSS 已收藏' : '收藏当前');
+    }
+
+    function renderFavorites() {
+      const favoritesList = document.getElementById('favoritesList');
+      const favorites = getFavorites();
+      favoritesList.innerHTML = '';
+
+      if (favorites.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'sidebar-empty';
+        empty.textContent = '还没有收藏，输入标题和 RSS 链接后点击“收藏当前”。';
+        favoritesList.appendChild(empty);
+        return;
+      }
+
+      favorites.forEach((favorite, index) => {
+        const row = document.createElement('div');
+        row.className = 'favorite-item';
+
+        const loadButton = document.createElement('button');
+        loadButton.className = 'preset-btn';
+        loadButton.type = 'button';
+        loadButton.textContent = favorite.title;
+        loadButton.title = favorite.url;
+        loadButton.onclick = () => fillFavorite(index);
+
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'favorite-delete';
+        deleteButton.type = 'button';
+        deleteButton.title = '删除收藏';
+        deleteButton.setAttribute('aria-label', '删除收藏');
+        deleteButton.textContent = '×';
+        deleteButton.onclick = () => removeFavorite(index);
+
+        row.appendChild(loadButton);
+        row.appendChild(deleteButton);
+        favoritesList.appendChild(row);
+      });
+    }
+
+    function fillFavorite(index) {
+      const favorites = getFavorites();
+      const favorite = favorites[index];
+      if (!favorite) return;
+
+      document.getElementById('feedTitle').value = favorite.title;
+      document.getElementById('feedUrl').value = favorite.url;
+      updateFavoriteButtonState();
+      showStatus(`已填入收藏：${favorite.title}`, 'success');
+    }
+
+    function saveCurrentFavorite() {
+      const url = document.getElementById('feedUrl').value.trim();
+      const title = document.getElementById('feedTitle').value.trim() || url;
+
+      if (!url) {
+        showStatus('请先输入订阅源 URL', 'error');
+        return;
+      }
+
+      const favorites = getFavorites();
+      const existingIndex = favorites.findIndex(item => item.url === url);
+      const favorite = { title, url };
+
+      if (existingIndex >= 0) {
+        favorites[existingIndex] = favorite;
+        showStatus(`已更新收藏：${title}`, 'success');
+      } else {
+        favorites.unshift(favorite);
+        showStatus(`已添加收藏：${title}`, 'success');
+      }
+
+      setFavorites(favorites);
+      renderFavorites();
+      updateFavoriteButtonState();
+    }
+
+    function removeFavorite(index) {
+      const favorites = getFavorites();
+      const removed = favorites.splice(index, 1)[0];
+      setFavorites(favorites);
+      renderFavorites();
+      updateFavoriteButtonState();
+
+      if (removed) {
+        showStatus(`已删除收藏：${removed.title}`, 'success');
+      }
     }
 
     async function fetchFeed(url) {
@@ -574,6 +739,7 @@
       document.getElementById('status').style.display = 'none';
       document.getElementById('feedUrl').value = '';
       document.getElementById('feedTitle').value = '';
+      updateFavoriteButtonState();
     }
 
     function downloadHTML() {
@@ -655,6 +821,10 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
+
+    document.getElementById('feedUrl').addEventListener('input', updateFavoriteButtonState);
+    renderFavorites();
+    updateFavoriteButtonState();
   </script>
   
   <!-- 不蒜子网站统计 -->
